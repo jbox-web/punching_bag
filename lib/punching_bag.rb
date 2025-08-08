@@ -1,7 +1,17 @@
+# frozen_string_literal: true
+
+# require external dependencies
+require 'zeitwerk'
+require 'voight_kampff'
+
+# load zeitwerk
+Zeitwerk::Loader.for_gem.tap do |loader|
+  loader.ignore("#{__dir__}/generators")
+  loader.setup
+end
+
 module PunchingBag
-  require 'punching_bag/engine' if defined?(Rails)
-  require 'punching_bag/acts_as_punchable'
-  require 'voight_kampff'
+  require_relative 'punching_bag/engine' if defined?(Rails)
 
   def self.punch(punchable, request = nil, count = 1)
     if request.try(:bot?)

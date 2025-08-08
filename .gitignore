@@ -1,5 +1,17 @@
-.DS_Store
-*~
-*.gem
+# Ignore bundler config.
+.bundle/
+
+# Ignore Gemfile.lock
 Gemfile.lock
-/spec/internal/log/*
+gemfiles/*.lock
+
+# Ignore test files
+coverage/
+
+# Ignore MacOS files
+.DS_Store
+
+# Ignore dummy app files
+spec/dummy/db/*.sqlite*
+spec/dummy/log/*.log
+spec/dummy/tmp/

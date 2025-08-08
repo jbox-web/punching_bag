@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 ActiveRecord::Schema.define do
   create_table(:articles, force: true) do |t|
     t.string :title
@@ -15,5 +17,5 @@ ActiveRecord::Schema.define do
   end
 
   add_index :punches, [:average_time], name: 'index_punches_on_average_time'
-  add_index :punches, [:punchable_type, :punchable_id], name: 'punchable_index'
+  add_index :punches, %i[punchable_type punchable_id], name: 'punchable_index'
 end

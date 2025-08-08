@@ -1,0 +1,62 @@
+---
+plugins:
+  - rubocop-performance
+  - rubocop-rake
+  - rubocop-rspec
+  - rubocop-rspec_rails
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.2
+  Exclude:
+    - bin/*
+    - gemfiles/*
+
+Gemspec/RequireMFA:
+  Enabled: false
+
+#########
+# STYLE #
+#########
+
+Style/Documentation:
+  Enabled: false
+
+Style/Lambda:
+  EnforcedStyle: literal
+
+##########
+# LAYOUT #
+##########
+
+Layout/LineLength:
+  Max: 150
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented_relative_to_receiver
+
+#########
+# RSPEC #
+#########
+
+RSpec/IndexedLet:
+  AllowedPatterns:
+    - article
+    - punch
+
+RSpec/NestedGroups:
+  Max: 4
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 8
+
+RSpec/NamedSubject:
+  Enabled: false
+
+RSpec/VerifiedDoubles:
+  Enabled: false
+
+# Prefer to_not because it's more readable (to_not raise_error)
+# See: https://docs.rubocop.org/rubocop-rspec/cops_rspec.html#rspecnottonot
+RSpec/NotToNot:
+  EnforcedStyle: to_not

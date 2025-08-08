@@ -1,9 +1,12 @@
-Punching Bag [![Build Status](https://travis-ci.org/biola/punching_bag.png?branch=master)](https://travis-ci.org/biola/punching_bag)
-============
+# Punching Bag
+
+[![CI](https://github.com/jbox-web/punching_bag/workflows/CI/badge.svg)](https://github.com/jbox-web/punching_bag/actions)
+[![Maintainability](https://qlty.sh/gh/jbox-web/projects/punching_bag/maintainability.svg)](https://qlty.sh/gh/jbox-web/projects/punching_bag)
+
 Punching Bag is a hit tracking plugin for Ruby on Rails that specializes in simple trending.
 
-Features
-========
+## Features
+
 * Total hit count
 * Hit counts for the last day, week, month, etc.
 * Simple trending based on most hits in the last day, week, month, etc.
@@ -11,14 +14,12 @@ Features
 * [ActsAsTaggableOn](https://github.com/mbleigh/acts-as-taggable-on) integration for trending tags/topics support
 * [Voight-Kampff](https://github.com/biola/Voight-Kampff) integration for bot checking
 
-Requirements
-============
+## Requirements
 
 - An existing Rails app
 - Ruby >= 2.3
 
-Installation
-============
+## Installation
 
 __In your Gemfile add:__
 
@@ -34,8 +35,8 @@ __In your model add:__
 
     acts_as_punchable
 
-Usage
-=====
+## Usage
+
 __Tracking hits in your controller__
 
     class PostsController < ApplicationController
@@ -82,8 +83,8 @@ __Compressing old hit records using custom settings__
 
     rake punching_bag:combine[14,3,2]
 
-Notes
-=====
+## Notes
+
 * The `punching_bag:combine` rake tasks is not run automatically. You'll have to run it manually or add it as a cron job.
 * The `punching_bag:combine` rake task can take a while depending on how many records need to be combined.
 * Passing the `request` object to the `punch` method is optional but without it requests from bots, crawlers and spiders will be tracked.

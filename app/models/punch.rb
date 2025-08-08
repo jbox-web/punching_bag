@@ -1,9 +1,10 @@
-class Punch < ActiveRecord::Base
+# frozen_string_literal: true
 
-  belongs_to :punchable, :polymorphic => true
+class Punch < ActiveRecord::Base
+  belongs_to :punchable, polymorphic: true
 
   before_validation :set_defaults
-  validates :punchable_id, :punchable_type, :starts_at, :ends_at, :average_time, :hits, :presence => true
+  validates :punchable_id, :punchable_type, :starts_at, :ends_at, :average_time, :hits, presence: true
 
   default_scope -> { order 'punches.average_time DESC' }
   scope :combos, -> { where 'punches.hits > 1' }
@@ -22,6 +23,18 @@ class Punch < ActiveRecord::Base
   }
   scope :except_for, ->(punch) { where('id != ?', punch.id) }
 
+  class << self
+    def average_for(punchables) # rubocop:disable Metrics/AbcSize
+      raise ArgumentError, 'Punchables must all be of the same class' if punchables.map(&:class).uniq.length > 1
+
+      sums = Punch.where(punchable_type: punchables.first.class.to_s, punchable_id: punchables.map(&:id)).group(:punchable_id).sum(:hits)
+
+      return 0 if sums.empty? # catch divide by zero
+
+      sums.values.sum.to_f / sums.length
+    end
+  end
+
   def jab?
     hits == 1
   end
@@ -30,7 +43,7 @@ class Punch < ActiveRecord::Base
     hits > 1
   end
 
-  def timeframe
+  def timeframe # rubocop:disable Metrics/MethodLength
     if starts_at.month != ends_at.month
       :year
     elsif starts_at.day != ends_at.day
@@ -45,19 +58,19 @@ class Punch < ActiveRecord::Base
   end
 
   def hour_combo?
-    timeframe == :hour and not find_true_combo_for(:hour) == self
+    timeframe == :hour and find_true_combo_for(:hour) != self
   end
 
   def day_combo?
-    timeframe == :day and not find_true_combo_for(:day) == self
+    timeframe == :day and find_true_combo_for(:day) != self
   end
 
   def month_combo?
-    timeframe == :month and not find_true_combo_for(:month) == self
+    timeframe == :month and find_true_combo_for(:month) != self
   end
 
   def year_combo?
-    timeframe == :year and not find_true_combo_for(:year) == self
+    timeframe == :year and find_true_combo_for(:year) != self
   end
 
   def find_combo_for(timeframe)
@@ -75,55 +88,42 @@ class Punch < ActiveRecord::Base
       combo.ends_at = ends_at if ends_at > combo.ends_at
       combo.average_time = PunchingBag.average_time(combo, self)
       combo.hits += hits
-      self.destroy if combo.save
+      destroy if combo.save
     end
     combo
   end
 
   def combine_by_hour
-    unless hour_combo? || day_combo? || month_combo? || year_combo?
-      combine_with find_combo_for(:hour)
-    end
+    return if hour_combo? || day_combo? || month_combo? || year_combo?
+
+    combine_with find_combo_for(:hour)
   end
 
   def combine_by_day
-    unless day_combo? || month_combo? || year_combo?
-      combine_with find_combo_for(:day)
-    end
+    return if day_combo? || month_combo? || year_combo?
+
+    combine_with find_combo_for(:day)
   end
 
   def combine_by_month
-    unless month_combo? || year_combo?
-      combine_with find_combo_for(:month)
-    end
+    return if month_combo? || year_combo?
+
+    combine_with find_combo_for(:month)
   end
 
   def combine_by_year
-    unless year_combo?
-      combine_with find_combo_for(:year)
-    end
-  end
+    return if year_combo?
 
-  def self.average_for(punchables)
-    if punchables.map(&:class).uniq.length > 1
-      raise ArgumentError, 'Punchables must all be of the same class'
-    end
-
-    sums = Punch.where(punchable_type: punchables.first.class.to_s, punchable_id: punchables.map(&:id)).group(:punchable_id).sum(:hits)
-
-    return 0 if sums.empty? # catch divide by zero
-
-    sums.values.inject(:+).to_f / sums.length
+    combine_with find_combo_for(:year)
   end
 
   private
 
   def set_defaults
-    if date = (self.starts_at ||= DateTime.now)
+    if (date = (self.starts_at ||= DateTime.now))
       self.ends_at ||= date
       self.average_time ||= date
       self.hits ||= 1
     end
   end
-
 end

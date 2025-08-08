@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+
+# rubocop:disable Metrics/BlockLength
 namespace :punching_bag do
   desc 'Combine old hit records together to improve performance'
   task(
@@ -68,3 +71,4 @@ namespace :punching_bag do
     end
   end
 end
+# rubocop:enable Metrics/BlockLength
