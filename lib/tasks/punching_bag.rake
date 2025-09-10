@@ -13,6 +13,6 @@ namespace :punching_bag do
       by_year_after: 1
     )
 
-    PunchingBag.combine_punches(args)
+    PunchingBag.combine_punches(**args)
   end
 end

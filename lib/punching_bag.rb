@@ -34,7 +34,7 @@ module PunchingBag
     Time.zone.at(total_time / hits)
   end
 
-  def self.combine_punches(args)
+  def self.combine_punches(by_hour_after: 24, by_day_after: 7, by_month_after: 1, by_year_after: 1) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/MethodLength
     distinct_method = Rails.version >= '5.0' ? :distinct : :uniq
 
     punchable_types = Punch.unscope(:order).public_send(
@@ -51,7 +51,7 @@ module PunchingBag
       punchables.each do |punchable|
         # by_year
         punchable.punches.before(
-          args[:by_year_after].to_i.years.ago
+          by_year_after.to_i.years.ago
         ).each do |punch|
           # Dont use the cached version.
           # We might have changed if we were the combo
@@ -61,7 +61,7 @@ module PunchingBag
 
         # by_month
         punchable.punches.before(
-          args[:by_month_after].to_i.months.ago
+          by_month_after.to_i.months.ago
         ).each do |punch|
           # Dont use the cached version.
           # We might have changed if we were the combo
@@ -71,7 +71,7 @@ module PunchingBag
 
         # by_day
         punchable.punches.before(
-          args[:by_day_after].to_i.days.ago
+          by_day_after.to_i.days.ago
         ).each do |punch|
           # Dont use the cached version.
           # We might have changed if we were the combo
@@ -81,7 +81,7 @@ module PunchingBag
 
         # by_hour
         punchable.punches.before(
-          args[:by_hour_after].to_i.hours.ago
+          by_hour_after.to_i.hours.ago
         ).each do |punch|
           # Dont use the cached version.
           # We might have changed if we were the combo
