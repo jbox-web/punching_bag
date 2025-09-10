@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# require ruby dependencies
+require 'logger'
+
 # require external dependencies
 require 'zeitwerk'
 require 'voight_kampff'
@@ -34,6 +37,14 @@ module PunchingBag
     Time.zone.at(total_time / hits)
   end
 
+  def self.logger
+    @logger ||= Logger.new($stdout)
+  end
+
+  def self.logger=(logger)
+    @logger = logger
+  end
+
   def self.combine_punches(by_hour_after: 24, by_day_after: 7, by_month_after: 1, by_year_after: 1) # rubocop:disable Metrics/MethodLength
     distinct_method = :distinct
     punchable_types = Punch.unscope(:order).public_send(distinct_method).pluck(:punchable_type)
@@ -55,6 +66,8 @@ module PunchingBag
   def self.combine(punchable, scope:, by:)
     cast_method    = :"#{by}s" # years/months/days/hours
     aggrate_method = :"combine_by_#{by}"
+
+    logger.debug { "Combining punches: by_#{by} / #{punchable.class.name}##{punchable.id}" }
 
     punchable.punches.before(
       scope.to_i.send(cast_method).ago

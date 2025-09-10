@@ -17,6 +17,7 @@ Gem::Specification.new do |s|
 
   s.files = Dir['LICENSE', 'app/**/*.rb', 'lib/**/*.rb', 'lib/tasks/*.rake']
 
+  s.add_dependency 'logger'
   s.add_dependency 'rails', '>= 7.1'
   s.add_dependency 'voight_kampff', '>= 1.0'
   s.add_dependency 'zeitwerk'
