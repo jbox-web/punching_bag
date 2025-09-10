@@ -34,14 +34,12 @@ module PunchingBag
     Time.zone.at(total_time / hits)
   end
 
-  def self.combine_punches(by_hour_after: 24, by_day_after: 7, by_month_after: 1, by_year_after: 1) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/MethodLength
+  def self.combine_punches(by_hour_after: 24, by_day_after: 7, by_month_after: 1, by_year_after: 1) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
     distinct_method = :distinct
 
-    punchable_types = Punch.unscope(:order).public_send(
-      distinct_method
-    ).pluck(:punchable_type)
+    punchable_types = Punch.unscope(:order).public_send(distinct_method).pluck(:punchable_type)
 
-    punchable_types.each do |punchable_type|
+    punchable_types.each do |punchable_type| # rubocop:disable Metrics/BlockLength
       punchables = punchable_type.constantize.unscoped.find(
         Punch.unscope(:order).public_send(distinct_method).where(
           punchable_type: punchable_type
