@@ -35,7 +35,7 @@ module PunchingBag
   end
 
   def self.combine_punches(by_hour_after: 24, by_day_after: 7, by_month_after: 1, by_year_after: 1) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/MethodLength
-    distinct_method = Rails.version >= '5.0' ? :distinct : :uniq
+    distinct_method = :distinct
 
     punchable_types = Punch.unscope(:order).public_send(
       distinct_method
