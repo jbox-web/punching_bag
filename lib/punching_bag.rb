@@ -71,7 +71,7 @@ module PunchingBag
 
     punchable.punches.before(
       scope.to_i.send(cast_method).ago
-    ).each do |punch|
+    ).find_each do |punch|
       # Dont use the cached version.
       # We might have changed if we were the combo
       punch.reload
