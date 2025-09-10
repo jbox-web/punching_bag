@@ -34,59 +34,35 @@ module PunchingBag
     Time.zone.at(total_time / hits)
   end
 
-  def self.combine_punches(by_hour_after: 24, by_day_after: 7, by_month_after: 1, by_year_after: 1) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+  def self.combine_punches(by_hour_after: 24, by_day_after: 7, by_month_after: 1, by_year_after: 1) # rubocop:disable Metrics/MethodLength
     distinct_method = :distinct
-
     punchable_types = Punch.unscope(:order).public_send(distinct_method).pluck(:punchable_type)
 
-    punchable_types.each do |punchable_type| # rubocop:disable Metrics/BlockLength
+    punchable_types.each do |punchable_type|
       punchables = punchable_type.constantize.unscoped.find(
-        Punch.unscope(:order).public_send(distinct_method).where(
-          punchable_type: punchable_type
-        ).pluck(:punchable_id)
+        Punch.unscope(:order).public_send(distinct_method).where(punchable_type: punchable_type).pluck(:punchable_id)
       )
 
       punchables.each do |punchable|
-        # by_year
-        punchable.punches.before(
-          by_year_after.to_i.years.ago
-        ).each do |punch|
-          # Dont use the cached version.
-          # We might have changed if we were the combo
-          punch.reload
-          punch.combine_by_year
-        end
-
-        # by_month
-        punchable.punches.before(
-          by_month_after.to_i.months.ago
-        ).each do |punch|
-          # Dont use the cached version.
-          # We might have changed if we were the combo
-          punch.reload
-          punch.combine_by_month
-        end
-
-        # by_day
-        punchable.punches.before(
-          by_day_after.to_i.days.ago
-        ).each do |punch|
-          # Dont use the cached version.
-          # We might have changed if we were the combo
-          punch.reload
-          punch.combine_by_day
-        end
-
-        # by_hour
-        punchable.punches.before(
-          by_hour_after.to_i.hours.ago
-        ).each do |punch|
-          # Dont use the cached version.
-          # We might have changed if we were the combo
-          punch.reload
-          punch.combine_by_hour
-        end
+        combine(punchable, scope: by_year_after,  by: :year)
+        combine(punchable, scope: by_month_after, by: :month)
+        combine(punchable, scope: by_day_after,   by: :day)
+        combine(punchable, scope: by_hour_after,  by: :hour)
       end
+    end
+  end
+
+  def self.combine(punchable, scope:, by:)
+    cast_method    = :"#{by}s" # years/months/days/hours
+    aggrate_method = :"combine_by_#{by}"
+
+    punchable.punches.before(
+      scope.to_i.send(cast_method).ago
+    ).each do |punch|
+      # Dont use the cached version.
+      # We might have changed if we were the combo
+      punch.reload
+      punch.public_method(aggrate_method)
     end
   end
 end
