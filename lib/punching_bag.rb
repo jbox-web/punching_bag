@@ -70,12 +70,12 @@ module PunchingBag
     logger.debug { "Combining punches: by_#{by} / #{punchable.class.name}##{punchable.id}" }
 
     punchable.punches.before(
-      scope.to_i.send(cast_method).ago
+      scope.to_i.public_send(cast_method).ago
     ).find_each do |punch|
       # Dont use the cached version.
       # We might have changed if we were the combo
       punch.reload
-      punch.public_method(aggrate_method)
+      punch.public_send(aggrate_method)
     end
   end
 end
