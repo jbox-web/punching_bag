@@ -2,4 +2,5 @@
 
 class Article < ActiveRecord::Base
   acts_as_punchable
+  acts_as_taggable_on :tags
 end

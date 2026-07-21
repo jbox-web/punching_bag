@@ -16,8 +16,8 @@ Punching Bag is a hit tracking plugin for Ruby on Rails that specializes in simp
 
 ## Requirements
 
-- An existing Rails app
-- Ruby >= 2.3
+- An existing Rails app (Rails >= 7.1)
+- Ruby >= 3.2
 
 ## Installation
 

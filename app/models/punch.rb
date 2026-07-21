@@ -6,7 +6,9 @@ class Punch < ActiveRecord::Base
   before_validation :set_defaults
   validates :punchable_id, :punchable_type, :starts_at, :ends_at, :average_time, :hits, presence: true
 
-  default_scope -> { order 'punches.average_time DESC' }
+  # NOTE: prefer this explicit scope over a default_scope: a default order
+  # silently applies to every query and forces callers to unscope/reorder it.
+  scope :by_average_time, -> { order(average_time: :desc) }
   scope :combos, -> { where 'punches.hits > 1' }
   scope :jabs, -> { where hits: 1 }
   scope :before, ->(time = nil) { where('punches.ends_at <= ?', time) unless time.nil? }
@@ -43,12 +45,15 @@ class Punch < ActiveRecord::Base
     hits > 1
   end
 
+  # NOTE: compare the enclosing period (beginning_of_month/day/hour), not the
+  # bare month/day/hour numbers: two timestamps a year apart can share the same
+  # month/day/hour number yet belong to different periods.
   def timeframe # rubocop:disable Metrics/MethodLength
-    if starts_at.month != ends_at.month
+    if starts_at.beginning_of_month != ends_at.beginning_of_month
       :year
-    elsif starts_at.day != ends_at.day
+    elsif starts_at.beginning_of_day != ends_at.beginning_of_day
       :month
-    elsif starts_at.hour != ends_at.hour
+    elsif starts_at.beginning_of_hour != ends_at.beginning_of_hour
       :day
     elsif starts_at != ends_at
       :hour
@@ -74,22 +79,23 @@ class Punch < ActiveRecord::Base
   end
 
   def find_combo_for(timeframe)
-    punches = punchable.punches.by_timeframe(timeframe, average_time).except_for(self)
+    punches = punchable.punches.by_timeframe(timeframe, average_time).except_for(self).by_average_time
     punches.combos.first || punches.first
   end
 
   def find_true_combo_for(timeframe)
-    punchable.punches.combos.by_timeframe(timeframe, average_time).first
+    punchable.punches.combos.by_timeframe(timeframe, average_time).by_average_time.first
   end
 
-  def combine_with(combo)
-    if combo && combo != self
-      combo.starts_at = starts_at if starts_at < combo.starts_at
-      combo.ends_at = ends_at if ends_at > combo.ends_at
-      combo.average_time = PunchingBag.average_time(combo, self)
-      combo.hits += hits
-      destroy if combo.save
-    end
+  def combine_with(combo) # rubocop:disable Metrics/AbcSize
+    return combo unless combo && combo != self
+
+    combo.starts_at = starts_at if starts_at < combo.starts_at
+    combo.ends_at = ends_at if ends_at > combo.ends_at
+    combo.average_time = PunchingBag.average_time(combo, self)
+    combo.hits += hits
+    # Atomic: a crash between saving the combo and destroying self would otherwise double-count the hits.
+    transaction { destroy if combo.save }
     combo
   end
 
@@ -120,7 +126,7 @@ class Punch < ActiveRecord::Base
   private
 
   def set_defaults
-    if (date = (self.starts_at ||= DateTime.now))
+    if (date = (self.starts_at ||= Time.current))
       self.ends_at ||= date
       self.average_time ||= date
       self.hits ||= 1

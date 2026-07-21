@@ -47,5 +47,57 @@ RSpec.describe PunchingBag do
     it 'finds an average time for multiple punches' do
       expect(described_class.average_time(punch1, punch2)).to eql(time + 25.seconds)
     end
+
+    it 'raises when there are no hits to average' do
+      expect { described_class.average_time }.to raise_error(ArgumentError)
+    end
+  end
+
+  describe '.combine_punches' do
+    let(:article) { Article.create title: 'Combo', content: 'ding ding ding' }
+
+    # Old enough to fall past the default by_day_after: 7 threshold.
+    let(:old_day) { 10.days.ago.utc.beginning_of_day }
+
+    def create_punch(starts_at)
+      Punch.create!(punchable: article, starts_at: starts_at)
+    end
+
+    context 'with several separate punches on the same old day' do
+      before do
+        3.times { |i| create_punch(old_day + i.hours) }
+      end
+
+      it 'collapses them into a single combo' do
+        expect { described_class.combine_punches }.to change { article.punches.count }.from(3).to(1)
+      end
+
+      it 'preserves the total hit count' do
+        described_class.combine_punches
+        expect(article.hits).to eq 3
+      end
+    end
+
+    context 'when a punch references a model class that no longer exists' do
+      before do
+        create_punch(old_day)
+        Punch.create!(punchable_type: 'NoSuchModel', punchable_id: 1, starts_at: old_day)
+      end
+
+      it 'skips the unknown type instead of raising' do
+        expect { described_class.combine_punches }.to_not raise_error
+      end
+    end
+
+    context 'when a punch is orphaned (its punchable was deleted)' do
+      before do
+        create_punch(old_day)
+        Punch.create!(punchable_type: 'Article', punchable_id: 999_999, starts_at: old_day)
+      end
+
+      it 'skips the orphan instead of raising' do
+        expect { described_class.combine_punches }.to_not raise_error
+      end
+    end
   end
 end

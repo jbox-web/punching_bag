@@ -5,6 +5,7 @@ source 'https://rubygems.org'
 gemspec
 
 # Dev libs
+gem 'acts-as-taggable-on'
 gem 'appraisal', git: 'https://github.com/thoughtbot/appraisal.git'
 gem 'combustion'
 gem 'rake'

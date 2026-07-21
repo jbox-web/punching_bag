@@ -34,6 +34,8 @@ module PunchingBag
       total_time += punch.average_time.to_f * punch.hits
       hits += punch.hits
     end
+    raise ArgumentError, 'cannot average a zero total of hits' if hits.zero?
+
     Time.zone.at(total_time / hits)
   end
 
@@ -46,15 +48,18 @@ module PunchingBag
   end
 
   def self.combine_punches(by_hour_after: 24, by_day_after: 7, by_month_after: 1, by_year_after: 1) # rubocop:disable Metrics/MethodLength
-    distinct_method = :distinct
-    punchable_types = Punch.unscope(:order).public_send(distinct_method).pluck(:punchable_type)
+    punchable_types = Punch.unscope(:order).distinct.pluck(:punchable_type)
 
     punchable_types.each do |punchable_type|
-      punchables = punchable_type.constantize.unscoped.find(
-        Punch.unscope(:order).public_send(distinct_method).where(punchable_type: punchable_type).pluck(:punchable_id)
-      )
+      # Skip a type whose model was renamed/removed instead of aborting the whole run.
+      klass = punchable_type.safe_constantize
+      next unless klass
 
-      punchables.each do |punchable|
+      ids = Punch.unscope(:order).distinct.where(punchable_type: punchable_type).pluck(:punchable_id)
+
+      # find_each batches the load (bounded memory) and where(id:) silently drops
+      # orphaned punches whose punchable was already deleted.
+      klass.unscoped.where(id: ids).find_each do |punchable|
         combine(punchable, scope: by_year_after,  by: :year)
         combine(punchable, scope: by_month_after, by: :month)
         combine(punchable, scope: by_day_after,   by: :day)

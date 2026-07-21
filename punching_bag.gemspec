@@ -8,8 +8,8 @@ Gem::Specification.new do |s|
   s.platform     = Gem::Platform::RUBY
   s.author       = 'Adam Crownoble'
   s.email        = 'adam@codenoble.com'
-  s.homepage     = 'https://github.com/biola/punching_bag'
-  s.summary      = 'PunchingBag hit conter and trending plugin'
+  s.homepage     = 'https://github.com/jbox-web/punching_bag'
+  s.summary      = 'PunchingBag hit counter and trending plugin'
   s.description  = 'PunchingBag is a hit counting and simple trending engine for Ruby on Rails'
   s.license      = 'MIT'
 

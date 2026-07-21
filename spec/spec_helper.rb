@@ -2,6 +2,10 @@
 
 require 'combustion'
 
+# Load before Combustion boots ActiveRecord so PunchingBag's engine initializer
+# detects ActsAsTaggableOn and wires the tag-trending integration.
+require 'acts-as-taggable-on'
+
 Combustion.path = 'spec/dummy'
 Combustion.initialize! :active_record
 

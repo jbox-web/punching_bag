@@ -4,7 +4,7 @@ class CreatePunchesTable < ActiveRecord::Migration[4.2]
   def self.up
     create_table :punches do |t|
       t.integer :punchable_id, null: false
-      t.string :punchable_type, null: false, limit: 20
+      t.string :punchable_type, null: false
       t.datetime :starts_at, null: false
       t.datetime :ends_at, null: false
       t.datetime :average_time, null: false

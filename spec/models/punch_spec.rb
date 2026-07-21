@@ -63,6 +63,12 @@ RSpec.describe Punch do
     its(:year_combo?) { is_expected.to be true }
   end
 
+  context 'with start and end sharing a month number across different years' do
+    let(:attrs) { { starts_at: Time.utc(2023, 3, 5), ends_at: Time.utc(2024, 3, 10) } }
+
+    its(:timeframe) { is_expected.to be :year }
+  end
+
   context 'with only one punch on a day' do
     let(:other_punch) { nil }
 
