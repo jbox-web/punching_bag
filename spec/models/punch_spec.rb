@@ -94,17 +94,17 @@ RSpec.describe Punch do
   end
 
   describe '.by_year' do
-    let!(:punch_2026) do
+    let!(:punch2026) do
       described_class.create! punchable: article, starts_at: Time.utc(2026, 6, 1),
                               ends_at: Time.utc(2026, 6, 1), average_time: Time.utc(2026, 6, 1)
     end
 
     it 'accepts an integer year' do
-      expect(described_class.by_year(2026)).to include(punch_2026)
+      expect(described_class.by_year(2026)).to include(punch2026)
     end
 
     it 'accepts a datetime' do
-      expect(described_class.by_year(DateTime.new(2026))).to include(punch_2026)
+      expect(described_class.by_year(DateTime.new(2026))).to include(punch2026)
     end
   end
 
