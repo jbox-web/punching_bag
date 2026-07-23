@@ -26,6 +26,9 @@ class Punch < ActiveRecord::Base
   scope :except_for, ->(punch) { where('id != ?', punch.id) }
 
   class << self
+    # Mean number of hits per punchable across the given records. They must all
+    # be of the same class (the query keys on a single punchable_type). Returns
+    # 0 when none of them has any punch, rather than dividing by zero.
     def average_for(punchables) # rubocop:disable Metrics/AbcSize
       raise ArgumentError, 'Punchables must all be of the same class' if punchables.map(&:class).uniq.length > 1
 
@@ -62,6 +65,10 @@ class Punch < ActiveRecord::Base
     end
   end
 
+  # The *_combo? predicates answer "is this punch a combo at that timeframe that
+  # is NOT the canonical (top) combo of its bucket?". True means another combo
+  # already owns the bucket, so this punch must not be folded again — that guard
+  # is what keeps combine_by_* from double-counting hits.
   def hour_combo?
     timeframe == :hour and find_true_combo_for(:hour) != self
   end
@@ -78,11 +85,15 @@ class Punch < ActiveRecord::Base
     timeframe == :year and find_true_combo_for(:year) != self
   end
 
+  # The merge TARGET for this punch in the given timeframe: the existing combo of
+  # the bucket if there is one, otherwise any other punch to start a combo from.
   def find_combo_for(timeframe)
     punches = punchable.punches.by_timeframe(timeframe, average_time).except_for(self).by_average_time
     punches.combos.first || punches.first
   end
 
+  # The CANONICAL combo of the bucket: the top existing combo (self included).
+  # Used by the *_combo? guards to tell whether this punch owns the bucket.
   def find_true_combo_for(timeframe)
     punchable.punches.combos.by_timeframe(timeframe, average_time).by_average_time.first
   end
@@ -99,6 +110,9 @@ class Punch < ActiveRecord::Base
     combo
   end
 
+  # The combine_by_* methods fold this punch into a coarser combo. Each guards
+  # against re-folding a punch already aggregated at its own or any coarser
+  # timeframe, so aggregation only ever moves finer -> coarser (hour up to year).
   def combine_by_hour
     return if hour_combo? || day_combo? || month_combo? || year_combo?
 

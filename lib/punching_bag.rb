@@ -16,6 +16,10 @@ end
 module PunchingBag
   require_relative 'punching_bag/engine' if defined?(Rails)
 
+  # Records a punch on `punchable`. When a `request` is passed and it reports
+  # `bot?` truthy (via voight_kampff), nothing is recorded and false is returned.
+  # Passing no request skips the bot check entirely, so bots are counted.
+  # Returns the saved Punch, or false when skipped or the save fails.
   def self.punch(punchable, request = nil, count = 1)
     if request.try(:bot?)
       false

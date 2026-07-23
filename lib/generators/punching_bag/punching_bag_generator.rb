@@ -9,6 +9,8 @@ class PunchingBagGenerator < Rails::Generators::Base
   source_root File.join(File.dirname(__FILE__), 'templates')
 
   def self.next_migration_number(dirname)
+    # Migration numbers are second-resolution timestamps; sleep 1s so a run that
+    # generates several migrations in a row cannot collide on the same number.
     sleep 1
     if ActiveRecord::Base.timestamped_migrations
       Time.now.utc.strftime('%Y%m%d%H%M%S')
