@@ -1,5 +1,17 @@
 # frozen_string_literal: true
 
+require 'simplecov'
+require 'simplecov_json_formatter'
+
+# Start SimpleCov before any measured code is required, so line-level and
+# branch-level execution during load (class bodies, engine initializers) is
+# tracked. Starting it after Combustion boots the engine would miss them.
+SimpleCov.start do
+  enable_coverage :branch
+  formatter SimpleCov::Formatter::MultiFormatter.new([SimpleCov::Formatter::HTMLFormatter, SimpleCov::Formatter::JSONFormatter])
+  skip 'spec/'
+end
+
 require 'combustion'
 
 # Load before Combustion boots ActiveRecord so PunchingBag's engine initializer
@@ -8,15 +20,6 @@ require 'acts-as-taggable-on'
 
 Combustion.path = 'spec/dummy'
 Combustion.initialize! :active_record
-
-require 'simplecov'
-require 'simplecov_json_formatter'
-
-# Start SimpleCov
-SimpleCov.start do
-  formatter SimpleCov::Formatter::MultiFormatter.new([SimpleCov::Formatter::HTMLFormatter, SimpleCov::Formatter::JSONFormatter])
-  add_filter 'spec/'
-end
 
 require 'rspec/rails'
 require 'rspec/its'

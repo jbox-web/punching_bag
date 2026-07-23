@@ -78,6 +78,44 @@ RSpec.describe PunchingBag do
       end
     end
 
+    context 'with several separate punches in the same old month' do
+      # Old enough to fall past the default by_month_after: 1 threshold, on
+      # distinct days so only the month fold (not the day fold) collapses them.
+      let(:old_month) { 2.months.ago.utc.beginning_of_month }
+
+      before do
+        3.times { |i| create_punch(old_month + i.days) }
+      end
+
+      it 'collapses them into a single combo' do
+        expect { described_class.combine_punches }.to change { article.punches.count }.from(3).to(1)
+      end
+
+      it 'preserves the total hit count' do
+        described_class.combine_punches
+        expect(article.hits).to eq 3
+      end
+    end
+
+    context 'with several separate punches in the same old year' do
+      # Old enough to fall past the default by_year_after: 1 threshold, in
+      # distinct months so only the year fold collapses them.
+      let(:old_year) { 2.years.ago.utc.beginning_of_year }
+
+      before do
+        3.times { |i| create_punch(old_year + i.months) }
+      end
+
+      it 'collapses them into a single combo' do
+        expect { described_class.combine_punches }.to change { article.punches.count }.from(3).to(1)
+      end
+
+      it 'preserves the total hit count' do
+        described_class.combine_punches
+        expect(article.hits).to eq 3
+      end
+    end
+
     context 'when a punch references a model class that no longer exists' do
       before do
         create_punch(old_day)

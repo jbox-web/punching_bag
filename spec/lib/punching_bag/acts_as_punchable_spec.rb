@@ -18,6 +18,10 @@ RSpec.describe 'PunchingBag::ActiveRecord::ClassMethods' do
     it 'finds correct result' do
       expect(Article.most_hit).to include(article2)
     end
+
+    it 'filters out punches older than the given time' do
+      expect(Article.most_hit(1.hour.from_now)).to be_empty
+    end
   end
 
   describe '.sort_by_popularity' do

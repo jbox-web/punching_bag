@@ -21,12 +21,21 @@ RSpec.describe 'PunchingBag::ActsAsTaggableOn' do
     it 'honours the limit' do
       expect(tag_class.most_hit(nil, 1).map(&:name)).to eq(%w[trending])
     end
+
+    it 'filters out punches older than the given time' do
+      expect(tag_class.most_hit(1.hour.from_now)).to be_empty
+    end
   end
 
   describe '#hits' do
     it 'sums the hits of the tagged, punched records' do
       trending = tag_class.find_by(name: 'trending')
       expect(trending.hits).to eq 3
+    end
+
+    it 'filters out punches older than the given time' do
+      trending = tag_class.find_by(name: 'trending')
+      expect(trending.hits(1.hour.from_now)).to eq 0
     end
   end
 end

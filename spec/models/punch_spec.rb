@@ -69,6 +69,70 @@ RSpec.describe Punch do
     its(:timeframe) { is_expected.to be :year }
   end
 
+  context 'with start and end in the same hour but different times' do
+    let(:attrs) { { starts_at: day + 1.hour + 10.minutes, ends_at: day + 1.hour + 40.minutes } }
+
+    its(:timeframe) { is_expected.to be :hour }
+  end
+
+  describe '.average_for' do
+    it 'raises when the punchables are of different classes' do
+      expect { described_class.average_for([article, described_class.new]) }.to raise_error(ArgumentError)
+    end
+
+    it 'returns 0 when the punchables have no punches' do
+      expect(described_class.average_for([article])).to eq 0
+    end
+
+    it 'averages the summed hits across the punchables' do
+      other = Article.create! title: 'Other', content: 'x'
+      described_class.create! punchable: article, hits: 3, starts_at: day, average_time: day
+      described_class.create! punchable: other,   hits: 1, starts_at: day, average_time: day
+
+      expect(described_class.average_for([article, other])).to eq 2.0
+    end
+  end
+
+  describe '.by_year' do
+    let!(:punch_2026) do
+      described_class.create! punchable: article, starts_at: Time.utc(2026, 6, 1),
+                              ends_at: Time.utc(2026, 6, 1), average_time: Time.utc(2026, 6, 1)
+    end
+
+    it 'accepts an integer year' do
+      expect(described_class.by_year(2026)).to include(punch_2026)
+    end
+
+    it 'accepts a datetime' do
+      expect(described_class.by_year(DateTime.new(2026))).to include(punch_2026)
+    end
+  end
+
+  describe 'time-window scopes' do
+    let!(:early) { described_class.create! punchable: article, starts_at: day,           average_time: day }
+    let!(:late)  { described_class.create! punchable: article, starts_at: day + 5.hours, average_time: day + 5.hours }
+
+    describe '.after' do
+      it 'keeps punches at or past the given average_time' do
+        expect(described_class.after(day + 1.hour)).to contain_exactly(late)
+      end
+
+      it 'returns every punch when given nil' do
+        expect(described_class.after(nil)).to contain_exactly(early, late)
+      end
+    end
+
+    describe '.before' do
+      it 'keeps punches ending at or before the given time' do
+        expect(described_class.before(day + 1.hour)).to contain_exactly(early)
+      end
+
+      it 'returns every punch when given nil' do
+        expect(described_class.before(nil)).to contain_exactly(early, late)
+      end
+    end
+  end
+
   context 'with only one punch on a day' do
     let(:other_punch) { nil }
 
@@ -111,6 +175,19 @@ RSpec.describe Punch do
 
       it "does't find the next week punch" do
         expect(punch.find_combo_for(:day)).to_not eql next_week_punch
+      end
+    end
+  end
+
+  context 'with a punch ending after the combo it merges into' do
+    let(:attrs) { { starts_at: day + 1.hour, ends_at: day + 3.hours } }
+    let!(:other_punch) { described_class.create punchable: article, starts_at: day + 2.hours }
+
+    before { punch.save! }
+
+    describe '#combine_with' do
+      it 'widens ends_at of the combo' do
+        expect { punch.combine_with other_punch }.to change(other_punch, :ends_at).to(day + 3.hours)
       end
     end
   end
